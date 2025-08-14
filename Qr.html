@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"
+    />
+    <title>Bite & Bytes | QR Voucher</title>
+    <meta name="theme-color" content="#111" />
+    <link rel="icon" href="logo.png" />
+    <style>
+      :root {
+        --brand: #6a5acd; /* Fallback; will be replaced by logo color */
+        --bg: #0e0e12;
+        --text: #f7f7fb;
+        --muted: #b9b9c6;
+        --card: #15151c;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        height: 100%;
+      }
+      body {
+        margin: 0;
+        font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica,
+          Arial, "Apple Color Emoji", "Segoe UI Emoji";
+        background: radial-gradient(
+            1200px 800px at 80% -10%,
+            color-mix(in oklab, var(--brand) 18%, transparent) 0%,
+            transparent 60%
+          ),
+          radial-gradient(
+            1200px 800px at -10% 110%,
+            color-mix(in oklab, var(--brand) 22%, transparent) 0%,
+            transparent 60%
+          ),
+          var(--bg);
+        color: var(--text);
+      }
+
+      /* Header */
+      .header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 14px 16px;
+        position: sticky;
+        top: 0;
+        z-index: 5;
+        background: linear-gradient(
+          to bottom,
+          rgba(14, 14, 18, 0.9),
+          rgba(14, 14, 18, 0.65) 70%,
+          rgba(14, 14, 18, 0)
+        );
+        backdrop-filter: saturate(1.2) blur(4px);
+        border-bottom: 1px solid
+          color-mix(in oklab, var(--brand) 20%, transparent);
+      }
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .brand img {
+        width: 36px;
+        height: 36px;
+        object-fit: contain;
+        border-radius: 8px;
+        box-shadow: 0 0 0 2px color-mix(in oklab, var(--brand) 26%, transparent);
+        background: #fff;
+      }
+      .brand h1 {
+        font-size: 16px;
+        margin: 0;
+        font-weight: 700;
+        letter-spacing: 0.2px;
+      }
+      .badge {
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 600;
+      }
+
+      /* Main layout */
+      .wrap {
+        max-width: 680px;
+        margin: 0 auto;
+        padding: 12px 16px 24px;
+      }
+      .card {
+        background: linear-gradient(
+          180deg,
+          color-mix(in oklab, var(--brand) 10%, var(--card)) 0%,
+          var(--card) 100%
+        );
+        border: 1px solid color-mix(in oklab, var(--brand) 24%, transparent);
+        border-radius: 16px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+        overflow: clip;
+      }
+      .card .section {
+        padding: 16px;
+      }
+
+      /* Scanner viewport */
+      #reader {
+        width: 100%;
+        aspect-ratio: 3/4;
+        background: #000;
+        border-radius: 12px;
+        overflow: hidden;
+      }
+      .controls {
+        display: flex;
+        gap: 10px;
+        margin-top: 12px;
+        flex-wrap: wrap;
+      }
+      .btn {
+        appearance: none;
+        border: 1px solid color-mix(in oklab, var(--brand) 28%, transparent);
+        background: color-mix(in oklab, var(--brand) 18%, #1b1b24);
+        color: var(--text);
+        padding: 10px 14px;
+        border-radius: 12px;
+        font-weight: 700;
+        letter-spacing: 0.2px;
+        cursor: pointer;
+        transition: transform 0.08s ease, filter 0.15s ease,
+          background 0.2s ease, border-color 0.2s ease;
+      }
+      .btn:hover {
+        filter: brightness(1.08);
+      }
+      .btn:active {
+        transform: translateY(1px) scale(0.99);
+      }
+      .btn.secondary {
+        background: #20202a;
+        color: var(--muted);
+      }
+      .btn.full {
+        flex: 1 1 140px;
+        text-align: center;
+      }
+
+      .hint {
+        color: var(--muted);
+        font-size: 13px;
+        margin-top: 8px;
+      }
+
+      /* Success screen */
+      .success {
+        display: none;
+        text-align: center;
+        padding: 28px 18px;
+        border-top: 1px dashed
+          color-mix(in oklab, var(--brand) 40%, transparent);
+        background: linear-gradient(
+          180deg,
+          color-mix(in oklab, var(--brand) 14%, transparent),
+          transparent
+        );
+      }
+      .success.active {
+        display: block;
+      }
+      .checkmark {
+        width: 92px;
+        height: 92px;
+        margin: 12px auto 8px;
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        color: white;
+        background: conic-gradient(
+          from 220deg at 50% 50%,
+          color-mix(in oklab, var(--brand) 65%, #00d084) 0%,
+          color-mix(in oklab, var(--brand) 40%, #00b894) 55%,
+          color-mix(in oklab, var(--brand) 20%, #00a67a) 100%
+        );
+        box-shadow: 0 12px 36px
+          color-mix(in oklab, var(--brand) 40%, transparent);
+        border: 4px solid
+          color-mix(in oklab, var(--brand) 35%, rgba(255, 255, 255, 0.08));
+      }
+      .success h2 {
+        margin: 10px 0 6px;
+        font-size: 22px;
+      }
+      .success p {
+        margin: 0;
+        color: var(--muted);
+      }
+
+      .desktop-note {
+        color: var(--muted);
+        font-size: 12px;
+        text-align: center;
+        margin-top: 10px;
+      }
+
+      @media (min-width: 720px) {
+        .wrap {
+          padding: 20px 16px 40px;
+        }
+        #reader {
+          aspect-ratio: 16/10;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header class="header">
+      <div class="brand">
+        <img src="logo.png" alt="Bite & Bytes" id="brandLogo" />
+        <div>
+          <h1>Bite & Bytes Photobooth</h1>
+          <div class="badge">Free Voucher Scanner</div>
+        </div>
+      </div>
+    </header>
+
+    <main class="wrap">
+      <div class="card">
+        <div class="section">
+          <div id="reader" aria-label="QR Scanner"></div>
+          <div class="controls">
+            <button id="btnStart" class="btn full">Start Camera Scan</button>
+            <button id="btnStop" class="btn secondary">Stop</button>
+            <label class="btn secondary" for="fileInput">Scan Image</label>
+            <input
+              id="fileInput"
+              type="file"
+              accept="image/*"
+              style="display: none"
+            />
+            <button id="btnSimulate" class="btn secondary">
+              Simulate Scan
+            </button>
+          </div>
+          <div id="hint" class="hint">
+            Grant camera permission to scan a QR code. Any code will unlock your
+            voucher.
+          </div>
+        </div>
+        <div id="success" class="success" role="status" aria-live="polite">
+          <div class="checkmark" aria-hidden="true">
+            <svg
+              width="52"
+              height="52"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="white"
+              stroke-width="2.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <polyline points="20 6 9 17 4 12" />
+            </svg>
+          </div>
+          <h2>Success! Scanned</h2>
+          <p>
+            Enjoy your Free Voucher at <strong>Bite & Bytes Photobooth</strong>.
+          </p>
+        </div>
+      </div>
+      <div class="desktop-note">
+        Tip: On desktop, use Scan Image or Simulate Scan for testing.
+      </div>
+    </main>
+
+    <!-- QR library -->
+    <script src="https://unpkg.com/html5-qrcode@2.3.10/html5-qrcode.min.js"></script>
+    <script>
+      (function () {
+        const $ = (id) => document.getElementById(id);
+        const readerId = "reader";
+        let html5Qrcode = null;
+        let scanning = false;
+        let cameraId = null;
+
+        // Brand color from logo.png
+        function setBrandFromLogo() {
+          const img = $("brandLogo");
+          if (!img) return;
+          const canvas = document.createElement("canvas");
+          const ctx = canvas.getContext("2d", { willReadFrequently: true });
+          const compute = () => {
+            try {
+              const w = (canvas.width = Math.min(64, img.naturalWidth || 64));
+              const h = (canvas.height = Math.min(64, img.naturalHeight || 64));
+              ctx.drawImage(img, 0, 0, w, h);
+              const { data } = ctx.getImageData(0, 0, w, h);
+              let r = 0,
+                g = 0,
+                b = 0,
+                c = 0;
+              for (let i = 0; i < data.length; i += 4) {
+                const a = data[i + 3];
+                if (a < 128) continue;
+                const rr = data[i],
+                  gg = data[i + 1],
+                  bb = data[i + 2];
+                if (rr > 235 && gg > 235 && bb > 235) continue;
+                r += rr;
+                g += gg;
+                b += bb;
+                c++;
+              }
+              if (c > 0) {
+                r = Math.round(r / c);
+                g = Math.round(g / c);
+                b = Math.round(b / c);
+                const toHsl = (r, g, b) => {
+                  r /= 255;
+                  g /= 255;
+                  b /= 255;
+                  const max = Math.max(r, g, b),
+                    min = Math.min(r, g, b);
+                  let h,
+                    s,
+                    l = (max + min) / 2;
+                  if (max === min) {
+                    h = s = 0;
+                  } else {
+                    const d = max - min;
+                    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+                    switch (max) {
+                      case r:
+                        h = (g - b) / d + (g < b ? 6 : 0);
+                        break;
+                      case g:
+                        h = (b - r) / d + 2;
+                        break;
+                      case b:
+                        h = (r - g) / d + 4;
+                        break;
+                    }
+                    h /= 6;
+                  }
+                  return [h, s, l];
+                };
+                const toRgb = (h, s, l) => {
+                  let r, g, b;
+                  if (s === 0) {
+                    r = g = b = l;
+                  } else {
+                    const hue2rgb = (p, q, t) => {
+                      if (t < 0) t += 1;
+                      if (t > 1) t -= 1;
+                      if (t < 1 / 6) return p + (q - p) * 6 * t;
+                      if (t < 1 / 2) return q;
+                      if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6;
+                      return p;
+                    };
+                    const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+                    const p = 2 * l - q;
+                    r = hue2rgb(p, q, h + 1 / 3);
+                    g = hue2rgb(p, q, h);
+                    b = hue2rgb(p, q, h - 1 / 3);
+                  }
+                  return [
+                    Math.round(r * 255),
+                    Math.round(g * 255),
+                    Math.round(b * 255),
+                  ];
+                };
+                let [h, s, l] = toHsl(r, g, b);
+                s = Math.min(1, s * 1.15);
+                l = Math.max(0.25, Math.min(0.6, l));
+                const [r2, g2, b2] = toRgb(h, s, l);
+                const brand = `rgb(${r2}, ${g2}, ${b2})`;
+                document.documentElement.style.setProperty("--brand", brand);
+              }
+            } catch (e) {}
+          };
+          if (img.complete) compute();
+          else img.addEventListener("load", compute, { once: true });
+        }
+
+        function showSuccess() {
+          $("success").classList.add("active");
+          $("hint").textContent =
+            "Voucher unlocked. Show this to the attendant.";
+        }
+
+        async function startScan() {
+          if (scanning) return;
+          
+          // Reset UI
+          $("success").classList.remove("active");
+          $("hint").textContent = "Initializing camera…";
+          
+          // Initialize scanner if not already done
+          if (!html5Qrcode) {
+            html5Qrcode = new Html5Qrcode(readerId, { 
+              verbose: false
+            });
+          }
+          
+          // Check if we're on a mobile device
+          const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+          
+          try {
+            // First try with minimal constraints (works best on desktop)
+            try {
+              await html5Qrcode.start(
+                {
+                  // Use 'user' for front camera, 'environment' for back camera on mobile
+                  facingMode: isMobile ? { ideal: ["environment", "user"] } : { ideal: ["user", "environment"] },
+                  // Remove resolution constraints as they can cause issues on some devices
+                },
+                {
+                  fps: 10,
+                  qrbox: 250,
+                  aspectRatio: 1.0,
+                  disableFlip: true // Can improve performance
+                },
+                (decodedText) => {
+                  console.log("QR Code detected:", decodedText);
+                  showSuccess();
+                },
+                (errorMessage) => {
+                  console.log("QR Code scan error:", errorMessage);
+                }
+              );
+              scanning = true;
+              $("hint").textContent = "Point your camera at any QR code.";
+              return;
+            } catch (firstError) {
+              console.log("First camera attempt failed, trying fallback:", firstError);
+              
+              // Try with even simpler constraints
+              await html5Qrcode.start(
+                null, // Let browser choose default camera
+                {
+                  fps: 10,
+                  qrbox: 200,
+                  aspectRatio: 1.0
+                },
+                (decodedText) => {
+                  console.log("QR Code detected (fallback):", decodedText);
+                  showSuccess();
+                },
+                (errorMessage) => {
+                  console.log("QR Code scan error (fallback):", errorMessage);
+                }
+              );
+              
+              scanning = true;
+              $("hint").textContent = "Camera started. Point at a QR code.";
+            }
+            
+          } catch (err) {
+            console.error("Camera error:", err);
+            $("hint").textContent = 
+              "Could not access camera. " + 
+              (isMobile ? "Please ensure you've granted camera permissions." : 
+              "Your browser might not support camera access. Try using 'Scan Image' instead.");
+            scanning = false;
+            
+            // If all else fails, show success anyway for demo purposes
+            setTimeout(showSuccess, 1000);
+          }
+        }
+
+        async function stopScan() {
+          if (html5Qrcode && scanning) {
+            await html5Qrcode.stop();
+          }
+          scanning = false;
+        }
+
+        async function scanFile(file) {
+          $("success").classList.remove("active");
+          if (!html5Qrcode)
+            html5Qrcode = new Html5Qrcode(readerId, { verbose: false });
+          try {
+            await stopScan();
+            await html5Qrcode.scanFile(file, true); // read any QR but we always show success anyway
+            showSuccess();
+          } catch (e) {
+            $("hint").textContent = "Could not read image. Try another file.";
+          }
+        }
+
+        $("btnStart").addEventListener("click", startScan);
+        $("btnStop").addEventListener("click", stopScan);
+        $("btnSimulate").addEventListener("click", () => {
+          showSuccess();
+        });
+        $("fileInput").addEventListener("change", (ev) => {
+          const f = ev.target.files && ev.target.files[0];
+          if (f) scanFile(f);
+          ev.target.value = "";
+        });
+
+        setBrandFromLogo();
+      })();
+    </script>
+  </body>
+</html>
